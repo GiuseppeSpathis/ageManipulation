@@ -1,0 +1,62 @@
+ogni nodo ha 8 gpu con memoria pe gpu 40 gb
+
+ci sono 3 modalita'
+nodo di login
+    lavora in modalita interattiva cioe' come se fossi in un normale sistema operativo unix
+    hai solo 2 cpu e hai solo 10 minuti di cpu per i tuoi processi
+    Viene usato per fare il login e per scambiare file col cluster
+    hostname:                  login.dgx.cineca.it
+    password
+
+nodi di compute in modalita interattiva
+    ci accedi col comando srun
+    srun -N2 --exclusive --cpus-per-task=5 --gres=gpu:1 -A IscrC_LM-MAD_0 -p dgx_usr_preempt --time=00:40:00 --pty bash
+    ad esempio in questo comando ho chiesto l'intero nodo con le sue 8 gpu (ci sono 3 nodi nel cluster) in modalita' interattiva per un'ora
+    DEVO USARE SEMPRE LA PARTIZIONE dgx_usr_preempt 
+    viene usato generalmente tipo per scaricare miniconda, pullare repo o scaricare librerie python
+
+nodi di compute in modalita batch SLURM
+    usa batch jobs per fare operazioni
+    job.out contiene standard output e standard error dello script
+    la working dir è $CINECA_SCRATCH/test/.
+    i task sarebbero i processi in parallelo
+    cpus-per-tas sarebbero i core per ogni task
+    in <account_no> devo mettere l'account number che si trova lanciando il comando 
+    saldo -b
+    
+
+    file script.x:
+
+    #!/bin/bash
+    #SBATCH --time=03:00:00         # format: HH:MM:SS
+    #SBATCH -p dgx_usr_preempt
+    #SBATCH --nodes=1  
+    #SBATCH --ntasks-per-node=1     # 1 tasks
+    #SBATCH --cpus-per-task=3
+    #SBATCH --gres=gpu:1            # 1 gpus per node out of 8
+    #SBATCH --mem=7100
+    #SBATCH --job-name=editAge
+    #SBATCH --out=job.out
+    #SBATCH --account=IscrC_LM-MAD_0
+    
+ 
+    source ~/miniconda3/bin/activate ldm
+    python ./ageEdit.py ./input ./my_dataset
+
+
+    fine file
+
+    e poi una volta creato il file script.x lo lancio con 
+    sbatch script.x
+
+
+    lo usero' per lanciare FADING
+
+
+
+    scancel jobID
+
+    sinfo --all     #da informazioni sui vari nodi
+    squeue          #da informazioni sui job che sono in coda
+
+    scontrol show job <jobid>   #di da informazioni dettagliate sul job running
